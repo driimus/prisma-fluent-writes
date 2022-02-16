@@ -22,15 +22,18 @@ it('should allow chaining on "create" calls', async () => {
 });
 
 it('should allow chaining on "update" calls', async () => {
-  const post = await prisma.post.create({ data: { title: "title" } });
-  const user = await prisma.user.create({
+  const { id, posts } = await prisma.user.create({
     data: {
       email: randomUUID(),
       posts: {
-        connect: {
-          id: post.id,
+        create: {
+          title: "title",
         },
       },
+    },
+    select: {
+      id: true,
+      posts: true,
     },
   });
 
@@ -38,12 +41,72 @@ it('should allow chaining on "update" calls', async () => {
     prisma.user
       .update({
         where: {
-          id: user.id,
+          id,
         },
         data: {
           name: randomUUID(),
         },
       })
       .posts()
-  ).resolves.toMatchObject([post]);
+  ).resolves.toMatchObject(posts);
+});
+
+it('should allow chaining on "upsert" calls', async () => {
+  const { id, posts } = await prisma.user.create({
+    data: {
+      email: randomUUID(),
+      posts: {
+        create: {
+          title: "title",
+        },
+      },
+    },
+    select: {
+      id: true,
+      posts: true,
+    },
+  });
+
+  await expect(
+    prisma.user
+      .upsert({
+        where: {
+          id,
+        },
+        create: {
+          email: randomUUID(),
+        },
+        update: {
+          name: randomUUID(),
+        },
+      })
+      .posts()
+  ).resolves.toMatchObject(posts);
+});
+
+it('should allow chaining on "delete" calls', async () => {
+  const { id, posts } = await prisma.user.create({
+    data: {
+      email: randomUUID(),
+      posts: {
+        create: {
+          title: "title",
+        },
+      },
+    },
+    select: {
+      id: true,
+      posts: true,
+    },
+  });
+
+  await expect(
+    prisma.user
+      .delete({
+        where: {
+          id,
+        },
+      })
+      .posts()
+  ).resolves.toMatchObject(posts);
 });
